@@ -46,7 +46,7 @@ import { RFFCFormSwitch, RFFCFormInput } from 'src/components/forms'
 import { Form } from 'react-final-form'
 import useConfirmModal from 'src/hooks/useConfirmModal'
 import { setCurrentTenant } from 'src/store/features/app'
-import { ModalService, TenantSelectorMultiple, TenantSelector } from 'src/components/utilities'
+import { ModalService, TenantSelectorMultiple } from 'src/components/utilities'
 import CippListOffcanvas from 'src/components/utilities/CippListOffcanvas'
 import { TitleButton } from 'src/components/buttons'
 
@@ -395,11 +395,9 @@ const ExcludedTenantsSettings = () => {
     })
 
   const handleConfirmExcludeTenant = (tenant) => {
-    addExcludeTenant(tenant.defaultDomainName)
+    addExcludeTenant(tenant)
       .unwrap()
       .then(() => {
-        // since we're re-using tenant selector,
-        // un-select it here after the tenant has been removed
         dispatch(setCurrentTenant({}))
       })
   }
@@ -409,11 +407,11 @@ const ExcludedTenantsSettings = () => {
       body: (
         <div style={{ overflow: 'visible' }}>
           <div>Select a tenant to exclude</div>
-          <TenantSelector action={(tenant) => (selected.current = tenant)} />
+          <TenantSelectorMultiple onChange={(tenant) => (selected = tenant)} />
         </div>
       ),
       title: 'Add Exclusion',
-      onConfirm: () => handleConfirmExcludeTenant(selected.current),
+      onConfirm: () => handleConfirmExcludeTenant(selected),
     })
   }
 
@@ -627,78 +625,89 @@ const NotificationsSettings = () => {
         <span>Error loading data</span>
       )}
       {notificationListResult.isSuccess && (
-        <Form
-          initialValues={{ ...notificationListResult.data }}
-          onSubmit={onSubmit}
-          render={({ handleSubmit, submitting, values }) => {
-            return (
-              <CForm onSubmit={handleSubmit}>
-                {notificationConfigResult.isFetching && (
-                  <CCallout color="info">
-                    <CSpinner>Loading</CSpinner>
-                  </CCallout>
-                )}
-                {notificationConfigResult.isSuccess && (
-                  <CCallout color="info">{notificationConfigResult.data?.Results}</CCallout>
-                )}
-                {notificationConfigResult.isError && (
-                  <CCallout color="danger">
-                    Could not connect to API: {notificationConfigResult.error.message}
-                  </CCallout>
-                )}
-                <CCol md={6}>
-                  <CCol md={6}>
-                    <RFFCFormInput type="text" name="email" label="E-mail" />
-                  </CCol>
-                  <CCol md={6}>
-                    <RFFCFormInput type="text" name="webhook" label="Webhook" />
-                  </CCol>
-                  <CFormLabel>
-                    Choose which types of updates you want to receive. This notification will be
-                    sent every 30 minutes.
-                  </CFormLabel>
-                  <br />
-                  <RFFCFormSwitch
-                    name="addUser"
-                    label="New Accounts created via CIPP"
-                    value={false}
-                  />
-                  <RFFCFormSwitch
-                    name="removeUser"
-                    label="Removed Accounts via CIPP"
-                    value={false}
-                  />
-                  <RFFCFormSwitch
-                    name="addChocoApp"
-                    label="New Applications added via CIPP"
-                    value={false}
-                  />
-                  <RFFCFormSwitch
-                    name="addPolicy"
-                    label="New Policies added via CIPP"
-                    value={false}
-                  />
-                  <RFFCFormSwitch
-                    name="addStandardsDeploy"
-                    label="New Standards added via CIPP"
-                    value={false}
-                  />
-                  <RFFCFormSwitch
-                    name="removeStandard"
-                    label="Removed Standards via CIPP"
-                    value={false}
-                  />
-                  <RFFCFormSwitch name="tokenUpdater" label="Token Refresh Events" value={false} />
+        <CCard className="h-100 w-50">
+          <CCardHeader>
+            <CCardTitle>Notifications</CCardTitle>
+          </CCardHeader>
+          <CCardBody>
+            <Form
+              initialValues={{ ...notificationListResult.data }}
+              onSubmit={onSubmit}
+              render={({ handleSubmit, submitting, values }) => {
+                return (
+                  <CForm onSubmit={handleSubmit}>
+                    {notificationConfigResult.isFetching && (
+                      <CCallout color="info">
+                        <CSpinner>Loading</CSpinner>
+                      </CCallout>
+                    )}
+                    {notificationConfigResult.isSuccess && (
+                      <CCallout color="info">{notificationConfigResult.data?.Results}</CCallout>
+                    )}
+                    {notificationConfigResult.isError && (
+                      <CCallout color="danger">
+                        Could not connect to API: {notificationConfigResult.error.message}
+                      </CCallout>
+                    )}
+                    <CCol>
+                      <CCol>
+                        <RFFCFormInput type="text" name="email" label="E-mail" />
+                      </CCol>
+                      <CCol>
+                        <RFFCFormInput type="text" name="webhook" label="Webhook" />
+                      </CCol>
+                      <CFormLabel>
+                        Choose which types of updates you want to receive. This notification will be
+                        sent every 30 minutes.
+                      </CFormLabel>
+                      <br />
+                      <RFFCFormSwitch
+                        name="addUser"
+                        label="New Accounts created via CIPP"
+                        value={false}
+                      />
+                      <RFFCFormSwitch
+                        name="removeUser"
+                        label="Removed Accounts via CIPP"
+                        value={false}
+                      />
+                      <RFFCFormSwitch
+                        name="addChocoApp"
+                        label="New Applications added via CIPP"
+                        value={false}
+                      />
+                      <RFFCFormSwitch
+                        name="addPolicy"
+                        label="New Policies added via CIPP"
+                        value={false}
+                      />
+                      <RFFCFormSwitch
+                        name="addStandardsDeploy"
+                        label="New Standards added via CIPP"
+                        value={false}
+                      />
+                      <RFFCFormSwitch
+                        name="removeStandard"
+                        label="Removed Standards via CIPP"
+                        value={false}
+                      />
+                      <RFFCFormSwitch
+                        name="tokenUpdater"
+                        label="Token Refresh Events"
+                        value={false}
+                      />
 
-                  <br></br>
-                  <CButton disabled={notificationConfigResult.isFetching} type="submit">
-                    Set Notification Settings
-                  </CButton>
-                </CCol>
-              </CForm>
-            )
-          }}
-        />
+                      <br></br>
+                      <CButton disabled={notificationConfigResult.isFetching} type="submit">
+                        Set Notification Settings
+                      </CButton>
+                    </CCol>
+                  </CForm>
+                )
+              }}
+            />
+          </CCardBody>
+        </CCard>
       )}
     </>
   )
@@ -835,7 +844,7 @@ const DNSSettings = () => {
     }, 2000)
   }
 
-  const resolvers = ['Google', 'Cloudflare']
+  const resolvers = ['Google', 'Cloudflare', 'Quad9']
 
   return (
     <>
